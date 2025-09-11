@@ -8,33 +8,59 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Dark theme Turing Machine design system */
+    --background: 220 27% 8%;
+    --foreground: 220 14% 96%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 220 27% 12%;
+    --card-foreground: 220 14% 96%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 27% 12%;
+    --popover-foreground: 220 14% 96%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Electric blue primary */
+    --primary: 214 100% 50%;
+    --primary-foreground: 220 14% 96%;
+    --primary-glow: 214 100% 60%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Dark secondary */
+    --secondary: 220 27% 16%;
+    --secondary-foreground: 220 14% 96%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 27% 14%;
+    --muted-foreground: 220 14% 65%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Neon green accent */
+    --accent: 150 100% 55%;
+    --accent-foreground: 220 27% 8%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 220 14% 96%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 27% 16%;
+    --input: 220 27% 16%;
+    --ring: 214 100% 50%;
+
+    /* Turing machine specific colors */
+    --tape-cell: 220 14% 90%;
+    --tape-cell-active: 214 100% 50%;
+    --tape-border: 220 27% 20%;
+    --state-active: 150 100% 55%;
+    --state-inactive: 220 27% 30%;
+    --warning: 35 100% 50%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(214 100% 50%), hsl(214 100% 60%));
+    --gradient-accent: linear-gradient(135deg, hsl(150 100% 55%), hsl(150 100% 65%));
+    --gradient-card: linear-gradient(135deg, hsl(220 27% 12%), hsl(220 27% 16%));
+    
+    /* Shadows and glows */
+    --shadow-glow: 0 0 20px hsl(214 100% 50% / 0.3);
+    --shadow-accent-glow: 0 0 20px hsl(150 100% 55% / 0.3);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --radius: 0.5rem;
 
