@@ -113,6 +113,14 @@ export const ExamplesPanel = ({ onLoadExample, onLoadInput }: ExamplesPanelProps
                 {example.description}
               </p>
 
+              {isSelected && example.explanation && (
+                <div className="mb-3 p-3 bg-muted/20 rounded-md border-l-2 border-primary/30">
+                  <p className="text-xs text-foreground leading-relaxed">
+                    <strong>How it works:</strong> {example.explanation}
+                  </p>
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <div className="flex flex-wrap gap-1">
                   {example.sampleInputs.slice(0, 3).map((input, index) => (
