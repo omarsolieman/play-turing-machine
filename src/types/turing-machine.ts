@@ -39,6 +39,7 @@ export interface TuringMachineExample {
   id: string;
   name: string;
   description: string;
+  explanation?: string;
   category: string;
   config: TuringMachineConfig;
   sampleInputs: string[];
