@@ -3,7 +3,8 @@ import {
   TuringMachineConfig, 
   ExecutionState, 
   TransitionRule, 
-  TuringMachineExample 
+  TuringMachineExample,
+  TuringMachineState
 } from '@/types/turing-machine';
 import { exampleMachines } from '@/data/example-machines';
 import { soundManager } from '@/utils/sound-manager';
@@ -11,6 +12,7 @@ import { Tape } from './Tape';
 import { Controls } from './Controls';
 import { StateDisplay } from './StateDisplay';
 import { TransitionEditor } from './TransitionEditor';
+import { StateEditor } from './StateEditor';
 import { VisualEditor } from './VisualEditor';
 import { ExamplesPanel } from './ExamplesPanel';
 import { Input } from '@/components/ui/input';
@@ -270,6 +272,15 @@ export const TuringMachine = () => {
     setConfig(newConfig);
   }, []);
 
+  // Handle states change
+  const handleStatesChange = useCallback((states: TuringMachineState[], newInitialState?: string) => {
+    setConfig(prev => ({
+      ...prev,
+      states,
+      initialState: newInitialState || prev.initialState
+    }));
+  }, []);
+
   // Handle cell click to edit tape
   const handleCellClick = useCallback((position: number, currentSymbol: string) => {
     if (execution.isRunning) return;
@@ -372,18 +383,26 @@ export const TuringMachine = () => {
                 <CardTitle>Machine Editor</CardTitle>
               </CardHeader>
               <CardContent>
-                <Tabs defaultValue="visual" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="visual">Visual Editor</TabsTrigger>
-                    <TabsTrigger value="text">Text Editor</TabsTrigger>
+                <Tabs defaultValue="states" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="states">States</TabsTrigger>
+                    <TabsTrigger value="visual">Visual</TabsTrigger>
+                    <TabsTrigger value="transitions">Transitions</TabsTrigger>
                   </TabsList>
+                  <TabsContent value="states" className="mt-4">
+                    <StateEditor 
+                      states={config.states}
+                      initialState={config.initialState}
+                      onStatesChange={handleStatesChange}
+                    />
+                  </TabsContent>
                   <TabsContent value="visual" className="mt-4">
                     <VisualEditor 
                       config={config}
                       onConfigChange={handleConfigChange}
                     />
                   </TabsContent>
-                  <TabsContent value="text" className="mt-4">
+                  <TabsContent value="transitions" className="mt-4">
                     <TransitionEditor 
                       transitions={config.transitions}
                       states={config.states.map(s => s.name)}

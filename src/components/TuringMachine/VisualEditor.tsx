@@ -30,25 +30,30 @@ interface VisualEditorProps {
 
 export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChange }) => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [visualStates, setVisualStates] = useState<VisualState[]>(() =>
-    config.states.map((state, index) => ({
+  const [visualStates, setVisualStates] = useState<VisualState[]>([]);
+  const [visualTransitions, setVisualTransitions] = useState<VisualTransition[]>([]);
+
+  // Initialize visual states and transitions from config
+  React.useEffect(() => {
+    const newVisualStates: VisualState[] = config.states.map((state, index) => ({
       id: state.name,
       x: 100 + (index % 4) * 150,
       y: 100 + Math.floor(index / 4) * 120,
       name: state.name,
       isAccept: state.isAccept,
       isReject: state.isReject,
-    }))
-  );
-  
-  const [visualTransitions, setVisualTransitions] = useState<VisualTransition[]>(() =>
-    config.transitions.map((rule, index) => ({
+    }));
+    
+    const newVisualTransitions: VisualTransition[] = config.transitions.map((rule, index) => ({
       id: `${rule.currentState}-${rule.nextState}-${index}`,
       fromState: rule.currentState,
       toState: rule.nextState,
       rule,
-    }))
-  );
+    }));
+
+    setVisualStates(newVisualStates);
+    setVisualTransitions(newVisualTransitions);
+  }, [config.states, config.transitions]);
 
   const [draggedState, setDraggedState] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -72,7 +77,9 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
   }, [visualStates, visualTransitions, config, onConfigChange]);
 
   React.useEffect(() => {
-    updateConfig();
+    if (visualStates.length > 0 || visualTransitions.length > 0) {
+      updateConfig();
+    }
   }, [visualStates, visualTransitions]);
 
   const handleMouseDown = (stateId: string, event: React.MouseEvent) => {
