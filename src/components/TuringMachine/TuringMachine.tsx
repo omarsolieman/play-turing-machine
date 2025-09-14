@@ -11,9 +11,12 @@ import { Tape } from './Tape';
 import { Controls } from './Controls';
 import { StateDisplay } from './StateDisplay';
 import { TransitionEditor } from './TransitionEditor';
+import { VisualEditor } from './VisualEditor';
 import { ExamplesPanel } from './ExamplesPanel';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Save, Upload } from 'lucide-react';
 
@@ -262,6 +265,11 @@ export const TuringMachine = () => {
     setConfig(prev => ({ ...prev, transitions }));
   }, []);
 
+  // Handle config change from visual editor
+  const handleConfigChange = useCallback((newConfig: TuringMachineConfig) => {
+    setConfig(newConfig);
+  }, []);
+
   // Handle cell click to edit tape
   const handleCellClick = useCallback((position: number, currentSymbol: string) => {
     if (execution.isRunning) return;
@@ -357,14 +365,35 @@ export const TuringMachine = () => {
             />
           </div>
 
-          {/* Right Column - Transition Editor */}
+          {/* Right Column - Machine Editor */}
           <div>
-            <TransitionEditor 
-              transitions={config.transitions}
-              states={config.states.map(s => s.name)}
-              alphabet={config.tapeAlphabet}
-              onTransitionsChange={handleTransitionsChange}
-            />
+            <Card>
+              <CardHeader>
+                <CardTitle>Machine Editor</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="visual" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="visual">Visual Editor</TabsTrigger>
+                    <TabsTrigger value="text">Text Editor</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="visual" className="mt-4">
+                    <VisualEditor 
+                      config={config}
+                      onConfigChange={handleConfigChange}
+                    />
+                  </TabsContent>
+                  <TabsContent value="text" className="mt-4">
+                    <TransitionEditor 
+                      transitions={config.transitions}
+                      states={config.states.map(s => s.name)}
+                      alphabet={config.tapeAlphabet}
+                      onTransitionsChange={handleTransitionsChange}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
