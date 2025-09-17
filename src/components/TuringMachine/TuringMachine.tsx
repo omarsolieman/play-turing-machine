@@ -21,6 +21,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Save, Upload } from 'lucide-react';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable"
 
 export const TuringMachine = () => {
   // Machine configuration
@@ -300,59 +305,48 @@ export const TuringMachine = () => {
   }, [execution.isRunning, config.blankSymbol]);
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-accent to-destructive bg-clip-text text-transparent mb-2">
-            Turing Machine Simulator
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Visual computational theory in action - design, simulate, and explore Turing machines
-          </p>
-        </div>
+    <div className="h-screen bg-background p-4 flex flex-col">
+      {/* Header */}
+      <div className="text-center mb-4">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-accent to-destructive bg-clip-text text-transparent mb-1">
+          Turing Machine Simulator
+        </h1>
+        <p className="text-muted-foreground text-md">
+          Visual computational theory in action - design, simulate, and explore Turing machines
+        </p>
+      </div>
 
-        {/* Input Controls */}
-        <div className="flex gap-4 items-end">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Input String
-            </label>
-            <Input
-              value={inputString}
-              onChange={(e) => setInputString(e.target.value)}
-              placeholder="Enter input string..."
-              className="font-mono text-lg"
-              disabled={execution.isRunning}
-            />
-          </div>
-          <Button 
-            onClick={handleReset}
-            variant="outline"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Apply Input
-          </Button>
-        </div>
+      {/* Main Content */}
+      <ResizablePanelGroup 
+        direction="horizontal"
+        className="flex-grow rounded-lg border"
+      >
+        <ResizablePanel defaultSize={50}>
+          <div className="p-4 h-full overflow-y-auto space-y-4">
+            {/* Input Controls */}
+            <div className="flex gap-4 items-end">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Input String
+                </label>
+                <Input
+                  value={inputString}
+                  onChange={(e) => setInputString(e.target.value)}
+                  placeholder="Enter input string..."
+                  className="font-mono"
+                  disabled={execution.isRunning}
+                />
+              </div>
+              <Button 
+                onClick={handleReset}
+                variant="outline"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Apply Input
+              </Button>
+            </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Left Column - Examples and States */}
-          <div className="space-y-6">
-            <ExamplesPanel 
-              onLoadExample={handleLoadExample}
-              onLoadInput={handleLoadInput}
-            />
-            <StateDisplay 
-              states={config.states}
-              currentState={execution.currentState}
-              isFinished={execution.isFinished}
-              isAccepted={execution.isAccepted}
-            />
-          </div>
-
-          {/* Middle Column - Tape and Controls */}
-          <div className="space-y-6">
+            {/* Tape and Controls */}
             <Tape 
               tape={execution.tape}
               headPosition={execution.headPosition}
@@ -374,55 +368,61 @@ export const TuringMachine = () => {
               onSpeedChange={handleSpeedChange}
               onSoundToggle={() => setSoundEnabled(!soundEnabled)}
             />
-          </div>
 
-          {/* Right Column - Machine Editor */}
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Machine Editor</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="states" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="states">States</TabsTrigger>
-                    <TabsTrigger value="visual">Visual</TabsTrigger>
-                    <TabsTrigger value="transitions">Transitions</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="states" className="mt-4">
-                    <StateEditor 
-                      states={config.states}
-                      initialState={config.initialState}
-                      onStatesChange={handleStatesChange}
-                    />
-                  </TabsContent>
-                  <TabsContent value="visual" className="mt-4">
-                    <VisualEditor 
-                      config={config}
-                      onConfigChange={handleConfigChange}
-                    />
-                  </TabsContent>
-                  <TabsContent value="transitions" className="mt-4">
-                    <TransitionEditor 
-                      transitions={config.transitions}
-                      states={config.states.map(s => s.name)}
-                      alphabet={config.tapeAlphabet}
-                      onTransitionsChange={handleTransitionsChange}
-                    />
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
+            {/* Examples and State */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ExamplesPanel 
+                onLoadExample={handleLoadExample}
+                onLoadInput={handleLoadInput}
+              />
+              <StateDisplay 
+                states={config.states}
+                currentState={execution.currentState}
+                isFinished={execution.isFinished}
+                isAccepted={execution.isAccepted}
+              />
+            </div>
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center pt-8 border-t border-border">
-          <p className="text-sm text-muted-foreground">
-            A complete Turing machine simulator with visual execution, sound effects, and example machines.
-          </p>
-        </div>
-      </div>
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={50}>
+          <Card className="h-full flex flex-col rounded-none border-0">
+            <CardHeader>
+              <CardTitle>Machine Editor</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-grow flex flex-col">
+              <Tabs defaultValue="visual" className="flex-grow flex flex-col">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="states">States</TabsTrigger>
+                  <TabsTrigger value="visual">Visual</TabsTrigger>
+                  <TabsTrigger value="transitions">Transitions</TabsTrigger>
+                </TabsList>
+                <TabsContent value="states" className="mt-4 flex-grow">
+                  <StateEditor 
+                    states={config.states}
+                    initialState={config.initialState}
+                    onStatesChange={handleStatesChange}
+                  />
+                </TabsContent>
+                <TabsContent value="visual" className="mt-4 flex-grow">
+                  <VisualEditor 
+                    config={config}
+                    onConfigChange={handleConfigChange}
+                  />
+                </TabsContent>
+                <TabsContent value="transitions" className="mt-4 flex-grow">
+                  <TransitionEditor 
+                    transitions={config.transitions}
+                    states={config.states.map(s => s.name)}
+                    alphabet={config.tapeAlphabet}
+                    onTransitionsChange={handleTransitionsChange}
+                  />
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 };
