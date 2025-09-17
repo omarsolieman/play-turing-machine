@@ -83,6 +83,12 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
     }
   }, [visualStates, visualTransitions]);
 
+  const getTransitionsFromSamePair = (fromState: string, toState: string) => {
+    return visualTransitions.filter(t => 
+      t.fromState === fromState && t.toState === toState
+    );
+  };
+
   const handleMouseDown = (stateId: string, event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -109,12 +115,15 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
     if (rect) {
       const state = visualStates.find(s => s.id === stateId);
       if (state) {
+        // Calculate offset from mouse to state center
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
         setDragOffset({
-          x: event.clientX - rect.left - state.x - 25,
-          y: event.clientY - rect.top - state.y - 25,
+          x: mouseX - (state.x + 25),
+          y: mouseY - (state.y + 25),
         });
         setDraggedState(stateId);
-        setIsDragging(false); // Will be set to true on first movement
+        setIsDragging(false);
       }
     }
   };
@@ -124,13 +133,25 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
       setIsDragging(true);
       const rect = svgRef.current?.getBoundingClientRect();
       if (rect) {
-        const newX = event.clientX - rect.left - dragOffset.x;
-        const newY = event.clientY - rect.top - dragOffset.y;
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+        
+        // Calculate new state position (center of circle)
+        const newCenterX = mouseX - dragOffset.x;
+        const newCenterY = mouseY - dragOffset.y;
+        
+        // Convert to top-left corner position for state object
+        const newX = newCenterX - 25;
+        const newY = newCenterY - 25;
         
         setVisualStates(prev =>
           prev.map(state =>
             state.id === draggedState
-              ? { ...state, x: Math.max(25, Math.min(750, newX)), y: Math.max(25, Math.min(450, newY)) }
+              ? { 
+                  ...state, 
+                  x: Math.max(25, Math.min(750, newX)), 
+                  y: Math.max(25, Math.min(450, newY)) 
+                }
               : state
           )
         );
@@ -200,12 +221,6 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
     setEditingTransition(null);
   };
 
-  const getTransitionsFromSamePair = (fromState: string, toState: string) => {
-    return visualTransitions.filter(t => 
-      t.fromState === fromState && t.toState === toState
-    );
-  };
-
   const getTransitionPath = (fromState: string, toState: string, transitionIndex: number = 0) => {
     const from = visualStates.find(s => s.id === fromState);
     const to = visualStates.find(s => s.id === toState);
@@ -213,39 +228,44 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
     if (!from || !to) return '';
     
     const stateRadius = 25;
+    const fromCenterX = from.x + 25;
+    const fromCenterY = from.y + 25;
+    const toCenterX = to.x + 25;
+    const toCenterY = to.y + 25;
     
     if (fromState === toState) {
       // Self-loop with better positioning
       const loopRadius = 35 + transitionIndex * 15;
-      const angle = (transitionIndex * 60) % 360; // Distribute loops around the state
+      const angle = (transitionIndex * 60) % 360;
       const angleRad = (angle * Math.PI) / 180;
       
-      const startX = from.x + stateRadius + Math.cos(angleRad) * stateRadius;
-      const startY = from.y + stateRadius + Math.sin(angleRad) * stateRadius;
+      const startAngleRad = angleRad - Math.PI / 4;
+      const endAngleRad = angleRad + Math.PI / 4;
       
-      const controlX1 = startX + Math.cos(angleRad) * loopRadius;
-      const controlY1 = startY + Math.sin(angleRad) * loopRadius;
-      const controlX2 = startX + Math.cos(angleRad + Math.PI/2) * loopRadius;
-      const controlY2 = startY + Math.sin(angleRad + Math.PI/2) * loopRadius;
+      const startX = fromCenterX + Math.cos(startAngleRad) * stateRadius;
+      const startY = fromCenterY + Math.sin(startAngleRad) * stateRadius;
       
-      const endX = from.x + stateRadius + Math.cos(angleRad + Math.PI/3) * stateRadius;
-      const endY = from.y + stateRadius + Math.sin(angleRad + Math.PI/3) * stateRadius;
+      const controlX1 = fromCenterX + Math.cos(angleRad) * (stateRadius + loopRadius);
+      const controlY1 = fromCenterY + Math.sin(angleRad) * (stateRadius + loopRadius);
       
-      return `M ${startX} ${startY} C ${controlX1} ${controlY1} ${controlX2} ${controlY2} ${endX} ${endY}`;
+      const endX = fromCenterX + Math.cos(endAngleRad) * stateRadius;
+      const endY = fromCenterY + Math.sin(endAngleRad) * stateRadius;
+      
+      return `M ${startX} ${startY} Q ${controlX1} ${controlY1} ${endX} ${endY}`;
     }
     
     // Regular transitions between different states
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
+    const dx = toCenterX - fromCenterX;
+    const dy = toCenterY - fromCenterY;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
     if (distance === 0) return '';
     
     // Calculate connection points on circle edges
-    const fromX = from.x + stateRadius + (dx / distance) * stateRadius;
-    const fromY = from.y + stateRadius + (dy / distance) * stateRadius;
-    const toX = to.x + stateRadius - (dx / distance) * stateRadius;
-    const toY = to.y + stateRadius - (dy / distance) * stateRadius;
+    const fromX = fromCenterX + (dx / distance) * stateRadius;
+    const fromY = fromCenterY + (dy / distance) * stateRadius;
+    const toX = toCenterX - (dx / distance) * stateRadius;
+    const toY = toCenterY - (dy / distance) * stateRadius;
     
     // Handle multiple transitions between same states with curve offset
     const sameTransitions = getTransitionsFromSamePair(fromState, toState);
@@ -278,25 +298,30 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
     if (!from || !to) return { x: 0, y: 0, angle: 0 };
     
     const stateRadius = 25;
+    const fromCenterX = from.x + 25;
+    const fromCenterY = from.y + 25;
+    const toCenterX = to.x + 25;
+    const toCenterY = to.y + 25;
     
     if (fromState === toState) {
       // Self-loop arrow positioning
       const angle = (transitionIndex * 60) % 360;
-      const angleRad = (angle * Math.PI) / 180;
-      const arrowX = from.x + stateRadius + Math.cos(angleRad + Math.PI/3) * stateRadius;
-      const arrowY = from.y + stateRadius + Math.sin(angleRad + Math.PI/3) * stateRadius;
-      return { x: arrowX, y: arrowY, angle: angle + 60 };
+      const angleRad = ((angle + 30) * Math.PI) / 180; // Offset for better arrow position
+      const arrowX = fromCenterX + Math.cos(angleRad) * stateRadius;
+      const arrowY = fromCenterY + Math.sin(angleRad) * stateRadius;
+      return { x: arrowX, y: arrowY, angle: angle + 30 };
     }
     
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
+    const dx = toCenterX - fromCenterX;
+    const dy = toCenterY - fromCenterY;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
     if (distance === 0) return { x: 0, y: 0, angle: 0 };
     
+    // Calculate arrow position on the edge of the target circle
     const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-    const arrowX = to.x + stateRadius - (dx / distance) * stateRadius;
-    const arrowY = to.y + stateRadius - (dy / distance) * stateRadius;
+    const arrowX = toCenterX - (dx / distance) * stateRadius;
+    const arrowY = toCenterY - (dy / distance) * stateRadius;
     
     return { x: arrowX, y: arrowY, angle };
   };
