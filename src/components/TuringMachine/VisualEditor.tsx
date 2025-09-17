@@ -183,51 +183,103 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
     setEditingTransition(null);
   };
 
-  const getTransitionPath = (fromState: string, toState: string, index: number = 0) => {
+  const getTransitionsFromSamePair = (fromState: string, toState: string) => {
+    return visualTransitions.filter(t => 
+      t.fromState === fromState && t.toState === toState
+    );
+  };
+
+  const getTransitionPath = (fromState: string, toState: string, transitionIndex: number = 0) => {
     const from = visualStates.find(s => s.id === fromState);
     const to = visualStates.find(s => s.id === toState);
     
     if (!from || !to) return '';
     
+    const stateRadius = 25;
+    
     if (fromState === toState) {
-      // Self-loop
-      const offset = 50 + index * 20;
-      return `M ${from.x + 25} ${from.y} Q ${from.x + offset} ${from.y - offset} ${from.x + 25} ${from.y}`;
+      // Self-loop with better positioning
+      const loopRadius = 35 + transitionIndex * 15;
+      const angle = (transitionIndex * 60) % 360; // Distribute loops around the state
+      const angleRad = (angle * Math.PI) / 180;
+      
+      const startX = from.x + stateRadius + Math.cos(angleRad) * stateRadius;
+      const startY = from.y + stateRadius + Math.sin(angleRad) * stateRadius;
+      
+      const controlX1 = startX + Math.cos(angleRad) * loopRadius;
+      const controlY1 = startY + Math.sin(angleRad) * loopRadius;
+      const controlX2 = startX + Math.cos(angleRad + Math.PI/2) * loopRadius;
+      const controlY2 = startY + Math.sin(angleRad + Math.PI/2) * loopRadius;
+      
+      const endX = from.x + stateRadius + Math.cos(angleRad + Math.PI/3) * stateRadius;
+      const endY = from.y + stateRadius + Math.sin(angleRad + Math.PI/3) * stateRadius;
+      
+      return `M ${startX} ${startY} C ${controlX1} ${controlY1} ${controlX2} ${controlY2} ${endX} ${endY}`;
     }
     
+    // Regular transitions between different states
     const dx = to.x - from.x;
     const dy = to.y - from.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    const fromX = from.x + 25 + (dx / distance) * 25;
-    const fromY = from.y + 25 + (dy / distance) * 25;
-    const toX = to.x + 25 - (dx / distance) * 25;
-    const toY = to.y + 25 - (dy / distance) * 25;
+    if (distance === 0) return '';
     
-    const offset = index * 15;
-    const midX = (fromX + toX) / 2 + offset;
-    const midY = (fromY + toY) / 2 + offset;
+    // Calculate connection points on circle edges
+    const fromX = from.x + stateRadius + (dx / distance) * stateRadius;
+    const fromY = from.y + stateRadius + (dy / distance) * stateRadius;
+    const toX = to.x + stateRadius - (dx / distance) * stateRadius;
+    const toY = to.y + stateRadius - (dy / distance) * stateRadius;
     
-    return `M ${fromX} ${fromY} Q ${midX} ${midY} ${toX} ${toY}`;
+    // Handle multiple transitions between same states with curve offset
+    const sameTransitions = getTransitionsFromSamePair(fromState, toState);
+    const totalTransitions = sameTransitions.length;
+    
+    if (totalTransitions === 1) {
+      // Single transition - straight line
+      return `M ${fromX} ${fromY} L ${toX} ${toY}`;
+    }
+    
+    // Multiple transitions - create curves
+    const curveOffset = 50;
+    const offsetStep = curveOffset / Math.max(1, totalTransitions - 1);
+    const currentOffset = (transitionIndex - (totalTransitions - 1) / 2) * offsetStep;
+    
+    // Calculate perpendicular offset for curve
+    const perpX = -dy / distance;
+    const perpY = dx / distance;
+    
+    const controlX = (fromX + toX) / 2 + perpX * currentOffset;
+    const controlY = (fromY + toY) / 2 + perpY * currentOffset;
+    
+    return `M ${fromX} ${fromY} Q ${controlX} ${controlY} ${toX} ${toY}`;
   };
 
-  const getArrowMarker = (fromState: string, toState: string) => {
+  const getArrowMarker = (fromState: string, toState: string, transitionIndex: number = 0) => {
     const from = visualStates.find(s => s.id === fromState);
     const to = visualStates.find(s => s.id === toState);
     
     if (!from || !to) return { x: 0, y: 0, angle: 0 };
     
+    const stateRadius = 25;
+    
     if (fromState === toState) {
-      return { x: from.x + 50, y: from.y, angle: 180 };
+      // Self-loop arrow positioning
+      const angle = (transitionIndex * 60) % 360;
+      const angleRad = (angle * Math.PI) / 180;
+      const arrowX = from.x + stateRadius + Math.cos(angleRad + Math.PI/3) * stateRadius;
+      const arrowY = from.y + stateRadius + Math.sin(angleRad + Math.PI/3) * stateRadius;
+      return { x: arrowX, y: arrowY, angle: angle + 60 };
     }
     
     const dx = to.x - from.x;
     const dy = to.y - from.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
     
-    const arrowX = to.x + 25 - (dx / distance) * 25;
-    const arrowY = to.y + 25 - (dy / distance) * 25;
+    if (distance === 0) return { x: 0, y: 0, angle: 0 };
+    
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    const arrowX = to.x + stateRadius - (dx / distance) * stateRadius;
+    const arrowY = to.y + stateRadius - (dy / distance) * stateRadius;
     
     return { x: arrowX, y: arrowY, angle };
   };
@@ -282,12 +334,49 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
           </defs>
 
           {/* Transitions */}
-          {visualTransitions.map((transition, index) => {
-            const path = getTransitionPath(transition.fromState, transition.toState, index);
-            const arrow = getArrowMarker(transition.fromState, transition.toState);
-            const midPath = path.split(' ');
-            const midX = parseFloat(midPath[4]) || arrow.x;
-            const midY = parseFloat(midPath[5]) || arrow.y;
+          {visualTransitions.map((transition, globalIndex) => {
+            // Find transitions between the same states to handle multiple transitions
+            const sameTransitions = getTransitionsFromSamePair(transition.fromState, transition.toState);
+            const transitionIndex = sameTransitions.findIndex(t => t.id === transition.id);
+            
+            const path = getTransitionPath(transition.fromState, transition.toState, transitionIndex);
+            const arrow = getArrowMarker(transition.fromState, transition.toState, transitionIndex);
+            
+            // Calculate label position based on path type
+            let labelX, labelY;
+            if (transition.fromState === transition.toState) {
+              // Self-loop label positioning
+              const from = visualStates.find(s => s.id === transition.fromState);
+              if (from) {
+                const angle = (transitionIndex * 60) % 360;
+                const angleRad = (angle * Math.PI) / 180;
+                const labelRadius = 60 + transitionIndex * 15;
+                labelX = from.x + 25 + Math.cos(angleRad) * labelRadius;
+                labelY = from.y + 25 + Math.sin(angleRad) * labelRadius;
+              } else {
+                labelX = arrow.x;
+                labelY = arrow.y;
+              }
+            } else {
+              // Regular transition label positioning
+              const pathCommands = path.split(' ');
+              if (pathCommands[0] === 'M' && pathCommands[3] === 'Q') {
+                // Curved path
+                labelX = parseFloat(pathCommands[4]);
+                labelY = parseFloat(pathCommands[5]) - 8;
+              } else if (pathCommands[0] === 'M' && pathCommands[3] === 'L') {
+                // Straight path
+                const startX = parseFloat(pathCommands[1]);
+                const startY = parseFloat(pathCommands[2]);
+                const endX = parseFloat(pathCommands[4]);
+                const endY = parseFloat(pathCommands[5]);
+                labelX = (startX + endX) / 2;
+                labelY = (startY + endY) / 2 - 8;
+              } else {
+                labelX = arrow.x;
+                labelY = arrow.y - 8;
+              }
+            }
 
             return (
               <g key={transition.id}>
@@ -297,18 +386,29 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
                   strokeWidth="2"
                   fill="none"
                   markerEnd="url(#arrowhead)"
-                  className="cursor-pointer hover:stroke-tm-transition-hover"
+                  className="cursor-pointer hover:stroke-tm-transition-hover transition-colors"
                   onClick={() => setSelectedTransition(transition.id)}
                 />
+                <rect
+                  x={labelX - 20}
+                  y={labelY - 8}
+                  width="40"
+                  height="16"
+                  fill="hsl(var(--tm-canvas))"
+                  stroke="hsl(var(--tm-border))"
+                  strokeWidth="1"
+                  rx="3"
+                  className="pointer-events-none"
+                />
                 <text
-                  x={midX}
-                  y={midY - 5}
+                  x={labelX}
+                  y={labelY + 3}
                   fill="hsl(var(--tm-text))"
-                  fontSize="12"
+                  fontSize="10"
                   textAnchor="middle"
-                  className="pointer-events-none select-none"
+                  className="pointer-events-none select-none font-mono"
                 >
-                  {`${transition.rule.readSymbol}/${transition.rule.writeSymbol},${transition.rule.moveDirection}`}
+                  {`${transition.rule.readSymbol || '∅'}/${transition.rule.writeSymbol || '∅'},${transition.rule.moveDirection}`}
                 </text>
               </g>
             );
@@ -317,6 +417,16 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
           {/* States */}
           {visualStates.map((state) => (
             <g key={state.id}>
+              {/* Shadow for depth */}
+              <circle
+                cx={state.x + 27}
+                cy={state.y + 27}
+                r="25"
+                fill="rgba(0,0,0,0.1)"
+                className="pointer-events-none"
+              />
+              
+              {/* Main state circle */}
               <circle
                 cx={state.x + 25}
                 cy={state.y + 25}
@@ -334,6 +444,8 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
                 onMouseDown={(e) => handleMouseDown(state.id, e)}
                 onClick={() => setSelectedState(selectedState === state.id ? null : state.id)}
               />
+              
+              {/* Double circle for accept states */}
               {state.isAccept && (
                 <circle
                   cx={state.x + 25}
@@ -345,6 +457,32 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
                   className="pointer-events-none"
                 />
               )}
+              
+              {/* X mark for reject states */}
+              {state.isReject && (
+                <g className="pointer-events-none">
+                  <line
+                    x1={state.x + 15}
+                    y1={state.y + 15}
+                    x2={state.x + 35}
+                    y2={state.y + 35}
+                    stroke="hsl(var(--tm-background))"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                  <line
+                    x1={state.x + 35}
+                    y1={state.y + 15}
+                    x2={state.x + 15}
+                    y2={state.y + 35}
+                    stroke="hsl(var(--tm-background))"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                </g>
+              )}
+              
+              {/* State name */}
               <text
                 x={state.x + 25}
                 y={state.y + 30}
@@ -355,6 +493,28 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
               >
                 {state.name}
               </text>
+              
+              {/* Initial state indicator */}
+              {state.name === config.initialState && (
+                <g className="pointer-events-none">
+                  <path
+                    d={`M ${state.x - 15} ${state.y + 25} L ${state.x} ${state.y + 25}`}
+                    stroke="hsl(var(--tm-text))"
+                    strokeWidth="2"
+                    markerEnd="url(#arrowhead)"
+                  />
+                  <text
+                    x={state.x - 25}
+                    y={state.y + 20}
+                    fill="hsl(var(--tm-text))"
+                    fontSize="10"
+                    textAnchor="middle"
+                    className="select-none"
+                  >
+                    start
+                  </text>
+                </g>
+              )}
             </g>
           ))}
 
