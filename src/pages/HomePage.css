@@ -1,0 +1,41 @@
+/* HomePage Styles */
+.home-page {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 2rem;
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+.home-page header {
+  margin-bottom: 2rem;
+}
+
+.home-page h1 {
+  font-size: 2.5rem;
+  color: #007acc;
+}
+
+.home-page main {
+  margin-bottom: 2rem;
+}
+
+.home-page p {
+  font-size: 1.2rem;
+  line-height: 1.6;
+}
+
+.home-page footer {
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.home-page a {
+  color: #007acc;
+  text-decoration: none;
+}
+
+.home-page a:hover {
+  text-decoration: underline;
+}
