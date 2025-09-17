@@ -3,7 +3,8 @@ import {
   TuringMachineConfig, 
   ExecutionState, 
   TransitionRule, 
-  TuringMachineExample 
+  TuringMachineExample,
+  TuringMachineState
 } from '@/types/turing-machine';
 import { exampleMachines } from '@/data/example-machines';
 import { soundManager } from '@/utils/sound-manager';
@@ -11,9 +12,13 @@ import { Tape } from './Tape';
 import { Controls } from './Controls';
 import { StateDisplay } from './StateDisplay';
 import { TransitionEditor } from './TransitionEditor';
+import { StateEditor } from './StateEditor';
+import { VisualEditor } from './VisualEditor';
 import { ExamplesPanel } from './ExamplesPanel';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Save, Upload } from 'lucide-react';
 
@@ -262,6 +267,20 @@ export const TuringMachine = () => {
     setConfig(prev => ({ ...prev, transitions }));
   }, []);
 
+  // Handle config change from visual editor
+  const handleConfigChange = useCallback((newConfig: TuringMachineConfig) => {
+    setConfig(newConfig);
+  }, []);
+
+  // Handle states change
+  const handleStatesChange = useCallback((states: TuringMachineState[], newInitialState?: string) => {
+    setConfig(prev => ({
+      ...prev,
+      states,
+      initialState: newInitialState || prev.initialState
+    }));
+  }, []);
+
   // Handle cell click to edit tape
   const handleCellClick = useCallback((position: number, currentSymbol: string) => {
     if (execution.isRunning) return;
@@ -357,14 +376,43 @@ export const TuringMachine = () => {
             />
           </div>
 
-          {/* Right Column - Transition Editor */}
+          {/* Right Column - Machine Editor */}
           <div>
-            <TransitionEditor 
-              transitions={config.transitions}
-              states={config.states.map(s => s.name)}
-              alphabet={config.tapeAlphabet}
-              onTransitionsChange={handleTransitionsChange}
-            />
+            <Card>
+              <CardHeader>
+                <CardTitle>Machine Editor</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="states" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="states">States</TabsTrigger>
+                    <TabsTrigger value="visual">Visual</TabsTrigger>
+                    <TabsTrigger value="transitions">Transitions</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="states" className="mt-4">
+                    <StateEditor 
+                      states={config.states}
+                      initialState={config.initialState}
+                      onStatesChange={handleStatesChange}
+                    />
+                  </TabsContent>
+                  <TabsContent value="visual" className="mt-4">
+                    <VisualEditor 
+                      config={config}
+                      onConfigChange={handleConfigChange}
+                    />
+                  </TabsContent>
+                  <TabsContent value="transitions" className="mt-4">
+                    <TransitionEditor 
+                      transitions={config.transitions}
+                      states={config.states.map(s => s.name)}
+                      alphabet={config.tapeAlphabet}
+                      onTransitionsChange={handleTransitionsChange}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
