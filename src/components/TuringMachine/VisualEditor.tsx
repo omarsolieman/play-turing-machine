@@ -57,6 +57,7 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
 
   const [draggedState, setDraggedState] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedTransition, setSelectedTransition] = useState<string | null>(null);
   const [isCreatingTransition, setIsCreatingTransition] = useState<string | null>(null);
@@ -83,6 +84,9 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
   }, [visualStates, visualTransitions]);
 
   const handleMouseDown = (stateId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
     if (isCreatingTransition) {
       if (isCreatingTransition === stateId) {
         setIsCreatingTransition(null);
@@ -106,16 +110,18 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
       const state = visualStates.find(s => s.id === stateId);
       if (state) {
         setDragOffset({
-          x: event.clientX - rect.left - state.x,
-          y: event.clientY - rect.top - state.y,
+          x: event.clientX - rect.left - state.x - 25,
+          y: event.clientY - rect.top - state.y - 25,
         });
         setDraggedState(stateId);
+        setIsDragging(false); // Will be set to true on first movement
       }
     }
   };
 
   const handleMouseMove = (event: React.MouseEvent) => {
     if (draggedState) {
+      setIsDragging(true);
       const rect = svgRef.current?.getBoundingClientRect();
       if (rect) {
         const newX = event.clientX - rect.left - dragOffset.x;
@@ -124,7 +130,7 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
         setVisualStates(prev =>
           prev.map(state =>
             state.id === draggedState
-              ? { ...state, x: Math.max(30, Math.min(770, newX)), y: Math.max(30, Math.min(470, newY)) }
+              ? { ...state, x: Math.max(25, Math.min(750, newX)), y: Math.max(25, Math.min(450, newY)) }
               : state
           )
         );
@@ -133,7 +139,18 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
   };
 
   const handleMouseUp = () => {
+    const wasDragging = isDragging;
     setDraggedState(null);
+    setIsDragging(false);
+    
+    // Only handle selection if we weren't dragging
+    return wasDragging;
+  };
+  
+  const handleStateClick = (stateId: string) => {
+    if (!isDragging && !draggedState) {
+      setSelectedState(selectedState === stateId ? null : stateId);
+    }
   };
 
   const addState = () => {
@@ -438,11 +455,19 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
                     ? "hsl(var(--tm-reject))"
                     : "hsl(var(--tm-state))"
                 }
-                stroke={selectedState === state.id ? "hsl(var(--tm-head))" : "hsl(var(--tm-border))"}
-                strokeWidth={selectedState === state.id ? "3" : "2"}
-                className="cursor-pointer hover:brightness-110 transition-all"
+                stroke={
+                  draggedState === state.id 
+                    ? "hsl(var(--tm-head))" 
+                    : selectedState === state.id 
+                    ? "hsl(var(--tm-head))" 
+                    : "hsl(var(--tm-border))"
+                }
+                strokeWidth={selectedState === state.id || draggedState === state.id ? "3" : "2"}
+                className={`cursor-move hover:brightness-110 transition-all ${
+                  draggedState === state.id ? 'opacity-80 brightness-110' : ''
+                }`}
                 onMouseDown={(e) => handleMouseDown(state.id, e)}
-                onClick={() => setSelectedState(selectedState === state.id ? null : state.id)}
+                onClick={() => handleStateClick(state.id)}
               />
               
               {/* Double circle for accept states */}
@@ -529,6 +554,34 @@ export const VisualEditor: React.FC<VisualEditorProps> = ({ config, onConfigChan
               className="animate-pulse"
             >
               Click another state to create transition
+            </text>
+          )}
+          
+          {/* Drag instruction */}
+          {!isCreatingTransition && !draggedState && visualStates.length > 0 && (
+            <text
+              x="400"
+              y="30"
+              fill="hsl(var(--tm-text))"
+              fontSize="12"
+              textAnchor="middle"
+              className="opacity-60"
+            >
+              Click and drag states to reposition • Click to select
+            </text>
+          )}
+          
+          {/* Dragging feedback */}
+          {draggedState && (
+            <text
+              x="400"
+              y="30"
+              fill="hsl(var(--tm-head))"
+              fontSize="14"
+              textAnchor="middle"
+              className="animate-pulse"
+            >
+              Dragging {draggedState}...
             </text>
           )}
         </svg>
