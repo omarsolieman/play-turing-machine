@@ -1,73 +1,84 @@
-# Welcome to your Lovable project
+# Play Turing Machine
 
-## Project info
+A web-based Turing Machine simulator built with React, Vite, and TypeScript. This project provides an interactive way to learn about and experiment with Turing machines.
 
-**URL**: https://lovable.dev/projects/8b0f584b-55b9-46ed-b917-169c465da3b8
+## Features
 
-## How can I edit this code?
+- **Visual Turing Machine Editor**: Create and modify Turing machine states and transitions using a graphical interface.
+- **Interactive Tape**: See the Turing machine's tape and head move as it executes.
+- **Step-by-step Execution**: Run the machine step-by-step to understand its behavior.
+- **State and Transition Management**: Easily add, edit, and delete states and transitions.
+- **Example Machines**: Load pre-built example machines to get started quickly.
+- **Responsive Design**: Use the simulator on both desktop and mobile devices.
 
-There are several ways of editing your application.
+## Technologies Used
 
-**Use Lovable**
+- [Vite](https://vitejs.dev/)
+- [React](https://react.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [shadcn/ui](https://ui.shadcn.com/)
+- [Tailwind CSS](https://tailwindcss.com/)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/8b0f584b-55b9-46ed-b917-169c465da3b8) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+To get a local copy up and running, follow these simple steps.
 
-**Use your preferred IDE**
+### Prerequisites
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+You need to have [Node.js](https://nodejs.org/) and [npm](https://www.npmjs.com/) (or [bun](https://bun.sh/)) installed on your machine.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Installation
 
-Follow these steps:
+1. Clone the repo
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+   ```sh
+   git clone https://github.com/omarsolieman/play-turing-machine.git
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. Navigate to the project directory
 
-# Step 3: Install the necessary dependencies.
-npm i
+   ```sh
+   cd play-turing-machine
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+3. Install NPM packages
 
-**Edit a file directly in GitHub**
+   ```sh
+   npm install
+   ```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+   or if you use bun
 
-**Use GitHub Codespaces**
+   ```sh
+   bun install
+   ```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+4. Start the development server
 
-## What technologies are used for this project?
+   ```sh
+   npm run dev
+   ```
 
-This project is built with:
+   or
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+   ```sh
+   bun run dev
+   ```
 
-## How can I deploy this project?
+Open [http://localhost:5173](http://localhost:5173) (or whatever port the console shows) to view it in the browser.
 
-Simply open [Lovable](https://lovable.dev/projects/8b0f584b-55b9-46ed-b917-169c465da3b8) and click on Share -> Publish.
+## Contributing
 
-## Can I connect a custom domain to my Lovable project?
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-Yes, you can!
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
